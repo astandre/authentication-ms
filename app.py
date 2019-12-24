@@ -5,15 +5,16 @@ from decouple import config
 from flask_mail import Mail, Message
 from sqlalchemy_utils import EncryptedType
 from random import randrange
+import os
 
 app = Flask(__name__)
-if config('DEBUG'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
+if os.environ.get('DEBUG'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL_DEV')
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['MAIL_USERNAME'] = config('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = config('MAIL_PASSWORD')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
@@ -24,7 +25,7 @@ mail = Mail(app)
 
 mail.init_app(app)
 
-key = config('KEY')
+key =  os.environ.get('KEY')
 
 
 class User(db.Model):
@@ -91,5 +92,5 @@ def request_pin():
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(host=config('HOST'), debug=config('DEBUG'))
+    app.run(host= os.environ.get('HOST'), debug= os.environ.get('DEBUG'))
 #
