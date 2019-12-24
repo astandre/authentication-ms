@@ -9,6 +9,8 @@ from random import randrange
 app = Flask(__name__)
 if config('DEBUG'):
     app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_USERNAME'] = config('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = config('MAIL_PASSWORD')
