@@ -8,11 +8,11 @@ from random import randrange
 import os
 
 app = Flask(__name__)
-if config('DEBUG'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
-    key = config('KEY')
-else:
-    key = os.environ.get('KEY')
+# if config('DEBUG'):
+#     app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
+#     key = config('KEY')
+# else:
+key = os.environ.get('KEY')
 # else:
 #     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
