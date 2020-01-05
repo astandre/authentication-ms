@@ -5,7 +5,7 @@ db.create_all()
 
 db.session.add(
     User(user_name='andre', password='pass', email="andreherera97@gmail.com", question="Nombre de tu primer perro",
-         answer="enki"))
+         answer="enki", image="2"))
 db.session.add(User(user_name='Janfer1798', password='56789', email="zhoyi1798@gmail.com"))
 
 db.session.commit()

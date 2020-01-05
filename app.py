@@ -9,12 +9,9 @@ import os
 
 app = Flask(__name__)
 # if config('DEBUG'):
-#     app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
-#     key = config('KEY')
-# else:
+# app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
+# key = config('KEY')
 key = os.environ.get('KEY')
-# else:
-#     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
@@ -38,6 +35,7 @@ class User(db.Model):
     pin = db.Column(db.String(4), nullable=True)
     question = db.Column(db.String(50), nullable=True)
     answer = db.Column(EncryptedType(db.String, key), nullable=True)
+    image = db.Column(EncryptedType(db.String, key), nullable=True)
 
     def __repr__(self):
         return f'{self.user_name}'
@@ -74,28 +72,65 @@ def authenticate():
                         return {"success": False, "message": "Wrong answer for question", "status": 200}
                 else:
                     return {"success": False, "message": "Must provide an answer", "status": 404}
+            elif request.json["method"] == "image":
+                if "image" in request.json:
+                    if request.json["image"].lower() == user.image:
+                        return {"success": True, "status": 200}
+                    else:
+                        return {"success": False, "message": "Wrong image code", "status": 200}
+                else:
+                    return {"success": False, "message": "Must provide an image code", "status": 404}
             else:
                 return {"success": False, "message": "Must provide a valid authentication mechanism", "status": 400}
     else:
         return {"error": "Method now allowed", "status": 503}
 
 
-@app.route('/request/pin', methods=['POST'])
+@app.route('/request/pin', methods=['GET'])
 def request_pin():
-    if request.method == 'POST':
+    if request.method == 'GET':
         user = User.query.filter_by(user_name=request.json["user_name"]).first()
         if user is None:
             return {"message": "User not found", "status": 404}
         else:
             user.pin = randrange(9999)
+            print(f"User: {user.user_name} has security Pin {user.pin}")
             db.session.commit()
             msg = Message("Security PIN",
                           sender=config('MAIL_USERNAME'),
                           recipients=[user.email])
             msg.body = f"Hello {user.user_name}, your security PIN is: {user.pin}"
             mail.send(msg)
-            print(f"User: {user.user_name} has security Pin {user.pin}")
+
             return {"message": "Pin has been sent to email", "status": 200}
+    else:
+        return {"error": "Method now allowed", "status": 503}
+
+
+@app.route('/request/question', methods=['GET'])
+def request_question():
+    if request.method == 'GET':
+        user = User.query.filter_by(user_name=request.json["user_name"]).first()
+        if user is None:
+            return {"message": "User not found", "status": 404}
+        else:
+            if user.question is not None:
+                return {"message": "This is your security question", "question": user.question, "status": 200}
+            else:
+                return {"message": "Question for user not configured", "status": 404}
+    else:
+        return {"error": "Method now allowed", "status": 503}
+
+
+@app.route('/request/images', methods=['GET'])
+def request_images():
+    if request.method == 'GET':
+        images = []
+        images.append({"url": "https://www.stickpng.com/assets/images/580b585b2edbce24c47b2bdc.png", "payload": "1"})
+        images.append({"url": "https://cdn.pixabay.com/photo/2012/04/15/18/57/dvd-34919_960_720.png", "payload": "2"})
+        images.append({"url": "https://www.stickpng.com/assets/images/58d2a871dc164e9dd9e66906.png", "payload": "3"})
+        images.append({"url": "https://www.stickpng.com/assets/images/580b57fbd9996e24bc43c0db.png", "payload": "4"})
+        return {"message": "This are the security images.", "images": images, "status": 200}
     else:
         return {"error": "Method now allowed", "status": 503}
 
@@ -108,7 +143,8 @@ def new_user():
         if "question" in data and "answer" in data:
             user.question = data["question"]
             user.answer = data["answer"]
-
+        if "image" in data:
+            user.image = data["image"]
         db.session.add(user)
         db.session.commit()
         return {"message": "User created", "user": user.id, "status": 200}
