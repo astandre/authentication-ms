@@ -8,8 +8,11 @@ from random import randrange
 import os
 
 app = Flask(__name__)
-# if os.environ.get('DEBUG'):
-#     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL_DEV')
+if config('DEBUG'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
+    key = config('KEY')
+else:
+    key = os.environ.get('KEY')
 # else:
 #     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,8 +28,6 @@ mail = Mail(app)
 
 mail.init_app(app)
 
-key =  os.environ.get('KEY')
-
 
 class User(db.Model):
     __tablename__ = "users"
@@ -35,6 +36,8 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=False)
     password = db.Column(EncryptedType(db.String, key), nullable=False)
     pin = db.Column(db.String(4), nullable=True)
+    question = db.Column(db.String(50), nullable=True)
+    answer = db.Column(EncryptedType(db.String, key), nullable=True)
 
     def __repr__(self):
         return f'{self.user_name}'
@@ -63,8 +66,16 @@ def authenticate():
                         return {"success": False, "message": "Wrong password or username", "status": 200}
                 else:
                     return {"success": False, "message": "Must provide username and password", "status": 404}
+            elif request.json["method"] == "question":
+                if "answer" in request.json:
+                    if request.json["answer"].lower() == user.answer:
+                        return {"success": True, "status": 200}
+                    else:
+                        return {"success": False, "message": "Wrong answer for question", "status": 200}
+                else:
+                    return {"success": False, "message": "Must provide an answer", "status": 404}
             else:
-                return {"success": True}
+                return {"success": False, "message": "Must provide a valid authentication mechanism", "status": 400}
     else:
         return {"error": "Method now allowed", "status": 503}
 
@@ -89,8 +100,23 @@ def request_pin():
         return {"error": "Method now allowed", "status": 503}
 
 
+@app.route('/user/new', methods=['POST'])
+def new_user():
+    if request.method == 'POST':
+        data = request.get_json()
+        user = User(user_name=data["user_name"], password=data["email"], email=data["password"])
+        if "question" in data and "answer" in data:
+            user.question = data["question"]
+            user.answer = data["answer"]
+
+        db.session.add(user)
+        db.session.commit()
+        return {"message": "User created", "user": user.id, "status": 200}
+    else:
+        return {"error": "Method now allowed", "status": 503}
+
+
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.run(host= os.environ.get('HOST'), debug= os.environ.get('DEBUG'))
-#
+    app.run(host=os.environ.get('HOST'), debug=os.environ.get('DEBUG'))
