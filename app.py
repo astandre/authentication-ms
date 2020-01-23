@@ -6,8 +6,12 @@ from flask_mail import Mail, Message
 from sqlalchemy_utils import EncryptedType
 from random import randrange
 import os
+from flask_cors import CORS, cross_origin
+
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 # if config('DEBUG'):
 # app.config['SQLALCHEMY_DATABASE_URI'] = config('DATABASE_URL_DEV')
 # key = config('KEY')
