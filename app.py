@@ -8,7 +8,6 @@ from random import randrange
 import os
 from flask_cors import CORS, cross_origin
 
-
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -90,9 +89,9 @@ def authenticate():
         return {"error": "Method now allowed", "status": 503}
 
 
-@app.route('/request/pin', methods=['GET'])
+@app.route('/request/pin', methods=['POST'])
 def request_pin():
-    if request.method == 'GET':
+    if request.method == 'POST':
         user = User.query.filter_by(user_name=request.json["user_name"]).first()
         if user is None:
             return {"message": "User not found", "status": 404}
@@ -111,9 +110,9 @@ def request_pin():
         return {"error": "Method now allowed", "status": 503}
 
 
-@app.route('/request/question', methods=['GET'])
+@app.route('/request/question', methods=['POST'])
 def request_question():
-    if request.method == 'GET':
+    if request.method == 'POST':
         user = User.query.filter_by(user_name=request.json["user_name"]).first()
         if user is None:
             return {"message": "User not found", "status": 404}
@@ -126,9 +125,9 @@ def request_question():
         return {"error": "Method now allowed", "status": 503}
 
 
-@app.route('/request/images', methods=['GET'])
+@app.route('/request/images', methods=['POST'])
 def request_images():
-    if request.method == 'GET':
+    if request.method == 'POST':
         images = []
         images.append({"url": "https://www.stickpng.com/assets/images/580b585b2edbce24c47b2bdc.png", "payload": "1"})
         images.append({"url": "https://cdn.pixabay.com/photo/2012/04/15/18/57/dvd-34919_960_720.png", "payload": "2"})
